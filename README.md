@@ -1,28 +1,39 @@
-# Aura-Path
-An AI-driven diabetes clinical decision support system with risk prediction, explainability, and patient-friendly insights.
-# AuraPath (MVP)
-AuraPath is a lightweight clinical decision support prototype built for a hackathon.
-It estimates diabetes risk using basic patient data and presents the results through
-an interactive dashboard.
+# AuraPath
 
-## What the app does
-- Collects patient clinical inputs
-- Predicts diabetes risk using a logistic regression model
-- Displays risk level and probability visually
-- Highlights key risk-driving factors
-- Generates AI-based lifestyle guidance and clinical summaries
+AuraPath is a simple AI-based clinical decision support prototype focused on early diabetes risk assessment.
+The goal of this project is to show how basic patient data can be used to estimate risk and provide understandable insights for both patients and healthcare learners.
 
-## Tech stack
-- Python
-- Streamlit
-- Pandas, NumPy
-- Scikit-learn
-- Plotly
-- Groq API (for AI-generated explanations)
+## Project Overview
 
-## How to run locally
-```bash
+AuraPath is a lightweight MVP created as part of a hackathon project.
+It takes a few common clinical inputs and predicts the likelihood of diabetes using a machine learning model. The results are shown in a clear dashboard so the risk level and important factors can be easily understood.
+
+## Features
+
+* Takes basic patient health inputs
+* Predicts diabetes risk using a Logistic Regression model
+* Shows risk probability in a visual format
+* Identifies the main factors influencing the prediction
+* Generates simple AI-based lifestyle suggestions and summary notes
+
+## Tech Stack
+
+* Python
+* Streamlit
+* Pandas and NumPy
+* Scikit-learn
+* Plotly
+* Groq API (used for generating explanations)
+
+## Running the Project Locally
+
+1. Install the required libraries:
+
 pip install -r requirements.txt
+
+
+2. Run the Streamlit app:
+
 streamlit run trial_mvp.py
 
-Demo: Streamlit deployment link (to be added in future)
+
