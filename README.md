@@ -1,7 +1,6 @@
 # Aura-Path
 An AI-driven diabetes clinical decision support system with risk prediction, explainability, and patient-friendly insights.
-# AuraPath – Hackathon MVP
-
+# AuraPath (MVP)
 AuraPath is a lightweight clinical decision support prototype built for a hackathon.
 It estimates diabetes risk using basic patient data and presents the results through
 an interactive dashboard.
