@@ -25,3 +25,4 @@ an interactive dashboard.
 pip install -r requirements.txt
 streamlit run trial_mvp.py
 
+Demo: Streamlit deployment link (to be added in future)
