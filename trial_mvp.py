@@ -154,7 +154,7 @@ st.plotly_chart(fig2, use_container_width=True)
 
 # AI FUNCTIONS 
 def groq_call(prompt, system):
-    if not GROK_API_KEY:
+    if not GROQ_API_KEY:
         return "AI unavailable (API key missing)."
 
     url = "https://api.groq.com/openai/v1/chat/completions"
