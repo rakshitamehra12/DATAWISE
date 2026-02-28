@@ -1,222 +1,169 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import plotly.graph_objects as go
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder, StandardScaler
-from sklearn.linear_model import LogisticRegression
 import requests
-import os
-from dotenv import load_dotenv
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.linear_model import LogisticRegression
 
+st.set_page_config(page_title="Diabetes Risk App", layout="wide")
 
-# Environment
+st.title("Diabetes Clinical Decision Support System")
 
-load_dotenv()
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+# Sidebar #
 
-# Page Configuration
+st.sidebar.header("Patient Information")
+api_key = st.sidebar.text_input("Optional: Enter Groq API Key", type="password")
 
-st.set_page_config(page_title="AI-Driven Diabetes CDS", layout="wide")
+# Load Dataset  #
 
-st.markdown("""
-<style>
-.main { background-color: #f5f7f9; }
-.stMetric { background-color: #ffffff; padding: 15px; border-radius: 10px; }
-</style>
-""", unsafe_allow_html=True)
+@st.cache_data
+def load_data():
+    return pd.read_csv("datasetdiabetes.csv")
 
-# Model Training
+df = load_data()
 
-@st.cache_resource
-def train_model():
-    file_path = "datasetdiabetes.csv"
+# Show columns quietly for debugging (can remove later)
+st.sidebar.write("Detected Columns:")
+st.sidebar.write(list(df.columns))
 
-    if not os.path.exists(file_path):
-        st.error("Dataset not found. Please place datasetdiabetes.csv in project folder.")
-        st.stop()
+def find_column(keyword):
+    for col in df.columns:
+        if keyword.lower() in col.lower():
+            return col
+    return None
 
-    data = pd.read_csv(file_path)
+target_col = find_column("diabetes") or find_column("outcome")
 
-    gender_enc = LabelEncoder()
-    smoking_enc = LabelEncoder()
+if target_col is None:
+    st.error("Target column not found in dataset.")
+    st.stop()
 
-    data["gender"] = gender_enc.fit_transform(data["gender"])
-    data["smoking_history"] = smoking_enc.fit_transform(data["smoking_history"])
+df_model = df.copy()
 
-    X = data.drop("diabetes", axis=1)
-    y = data["diabetes"]
+# Encode categorical columns
+encoders = {}
 
-    X_train, _, y_train, _ = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y
-    )
+for col in df_model.select_dtypes(include="object").columns:
+    le = LabelEncoder()
+    df_model[col] = le.fit_transform(df_model[col])
+    encoders[col] = le
 
-    scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train)
+X = df_model.drop(columns=[target_col])
+y = df_model[target_col]
 
-    model = LogisticRegression(max_iter=1000, class_weight="balanced")
-    model.fit(X_train_scaled, y_train)
+# Train simple model
+model = LogisticRegression(max_iter=1000)
+model.fit(X, y)
 
-    return model, scaler, X.columns, gender_enc, smoking_enc
+#  User Input Section  #
 
-model, scaler, feature_names, gender_encoder, smoking_encoder = train_model()
+st.sidebar.subheader("Enter Clinical Values")
 
-# Sidebar Inputs
+user_data = {}
 
-st.sidebar.header("📋 Patient Clinical Data")
-
-gender = st.sidebar.selectbox("Gender", ["Female", "Male"])
-age = st.sidebar.slider("Age", 1, 100, 45)
-
-col_a, col_b = st.sidebar.columns(2)
-hypertension = col_a.selectbox("Hypertension", [0, 1])
-heart_disease = col_b.selectbox("Heart Disease", [0, 1])
-
-smoking = st.sidebar.selectbox("Smoking History", ["never", "former", "current", "No Info"])
-bmi = st.sidebar.slider("BMI", 10.0, 50.0, 24.5, step=0.1)
-hba1c = st.sidebar.slider("HbA1c (%)", 4.0, 12.0, 5.5, step=0.1)
-glucose = st.sidebar.slider("Blood Glucose (mg/dL)", 60, 350, 100)
-
-
-# Risk Prediction
-
-gender_val = gender_encoder.transform([gender])[0]
-smoking_val = smoking_encoder.transform([smoking])[0]
-
-input_data = pd.DataFrame([[
-    gender_val, age, hypertension, heart_disease,
-    smoking_val, bmi, hba1c, glucose
-]], columns=feature_names)
-
-scaled_input = scaler.transform(input_data)
-risk_prob = model.predict_proba(scaled_input)[0][1]
-
-if risk_prob < 0.3:
-    risk_level = "Low"
-elif risk_prob < 0.7:
-    risk_level = "Moderate"
-else:
-    risk_level = "High"
-
-
-# Dashboard
-
-st.title("🩺 AI-Driven Diabetes Clinical Decision Support")
-
-left, right = st.columns(2)
-
-with left:
-    fig = go.Figure(go.Indicator(
-        mode="gauge+number",
-        value=risk_prob * 100,
-        title={"text": "Diabetes Risk (%)"},
-        gauge={
-            "axis": {"range": [0, 100]},
-            "steps": [
-                {"range": [0, 30], "color": "#c3e6cb"},
-                {"range": [30, 70], "color": "#ffeeba"},
-                {"range": [70, 100], "color": "#f8d7da"}
-            ]
-        }
-    ))
-    st.plotly_chart(fig, use_container_width=True)
-
-with right:
-    st.subheader("Clinical Risk Interpretation")
-    if risk_level == "Low":
-        st.success("Low Risk – Maintain healthy lifestyle.")
-    elif risk_level == "Moderate":
-        st.warning("Moderate Risk – Lifestyle intervention advised.")
+for col in X.columns:
+    if df[col].dtype == "object":
+        user_data[col] = st.sidebar.selectbox(col, df[col].unique())
     else:
-        st.error("High Risk – Diagnostic confirmation recommended.")
+        min_val = float(df[col].min())
+        max_val = float(df[col].max())
+        default = float(df[col].mean())
+        user_data[col] = st.sidebar.slider(col, min_val, max_val, default)
 
+input_df = pd.DataFrame([user_data])
 
-# Explainability
+# Apply same encoding to input
+for col in input_df.columns:
+    if col in encoders:
+        input_df[col] = encoders[col].transform(input_df[col])
 
-st.markdown("---")
-st.subheader("🔍 Individual Risk Drivers")
+#  Prediction  #
 
-contributions = model.coef_[0] * scaled_input[0]
-contrib_df = pd.DataFrame({
-    "Feature": feature_names,
-    "Contribution": contributions
-}).sort_values(by="Contribution", ascending=False)
+risk = model.predict_proba(input_df)[0][1] * 100
 
-top_factors = contrib_df.head(3)["Feature"].tolist()
+st.subheader("Predicted Diabetes Risk")
+st.metric("Risk Percentage", f"{risk:.2f}%")
 
-fig2 = go.Figure(go.Bar(
-    x=contrib_df["Contribution"],
-    y=contrib_df["Feature"],
-    orientation="h"
-))
-st.plotly_chart(fig2, use_container_width=True)
+# Basic Explanation#
 
+def basic_advice(score):
+    if score < 30:
+        return """
+Low risk.  
+Try maintaining a balanced diet, regular exercise, and routine checkups.
+"""
+    elif score < 60:
+        return """
+Moderate risk.  
+Consider reducing sugar intake, increasing physical activity,
+and monitoring blood glucose regularly.
+"""
+    else:
+        return """
+High risk.  
+It would be advisable to consult a doctor,
+monitor glucose frequently, and follow a structured diet plan.
+"""
 
-# AI FUNCTIONS 
-def groq_call(prompt, system):
-    if not GROQ_API_KEY:
-        return "AI unavailable (API key missing)."
+st.subheader("Clinical Guidance")
+st.write(basic_advice(risk))
+
+# Optional AI Enhancement  #
+def get_ai_response(prompt, key):
+    import requests
 
     url = "https://api.groq.com/openai/v1/chat/completions"
 
     headers = {
-        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Authorization": f"Bearer {key.strip()}",
         "Content-Type": "application/json"
     }
 
     data = {
-        "model":"llama-3.1-8b-instant",  
+        "model": "openai/gpt-oss-120b",
         "messages": [
-            {"role": "system", "content": system},
             {"role": "user", "content": prompt}
-        ],
-        "temperature": 0.4
+        ]
     }
 
-    response = requests.post(url, headers=headers, json=data)
+    try:
+        response = requests.request(
+            "POST",
+            url,
+            headers=headers,
+            json=data
+        )
 
-    if response.status_code == 200:
+        if response.status_code != 200:
+            return f"Status {response.status_code}: {response.text}"
+
         return response.json()["choices"][0]["message"]["content"]
-    else:
-        return f"AI service error: {response.text}"
+
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 
 
-st.markdown("---")
-st.subheader("🤖 AI Lifestyle & Exercise Coach")
+if api_key:
+    with st.spinner("Generating AI explanation..."):
+        prompt = f"The patient's predicted diabetes risk is {risk:.2f}%. Give practical lifestyle advice."
+        ai_text = get_ai_response(prompt, api_key)
 
-if st.button("Generate AI Health Tips"):
-    with st.spinner("Generating recommendations..."):
-        prompt = f"""
-        Patient Risk: {risk_level}
-        Age: {age}, BMI: {bmi}, HbA1c: {hba1c}, Glucose: {glucose}, Smoking: {smoking}
-        Give diet, exercise and lifestyle guidance.
-        """
-        st.write(groq_call(prompt, "You are a preventive healthcare assistant."))
+        if ai_text:
+            st.subheader("AI Based Suggestions")
+            st.write(ai_text)
+        else:
+            st.warning("AI service not responding. Showing standard guidance only.")
 
-st.markdown("---")
-st.subheader("🧠 AI Risk Explanation")
+#  Correlation Section  #
 
-if st.button("Explain Risk in Simple Language"):
-    with st.spinner("Explaining risk..."):
-        prompt = f"""
-        Risk Level: {risk_level}
-        Key factors: {", ".join(top_factors)}
-        Explain clearly to a patient.
-        """
-        st.write(groq_call(prompt, "You explain medical risk simply."))
+st.subheader("Feature Correlation Overview")
 
-st.markdown("---")
-st.subheader("🧾 AI Doctor Summary")
+numeric_df = df_model.select_dtypes(include=np.number)
 
-if st.button("Generate Clinical Summary"):
-    with st.spinner("Preparing summary..."):
-        prompt = f"""
-        Age: {age}, BMI: {bmi}, HbA1c: {hba1c}, Glucose: {glucose}
-        Risk Level: {risk_level}
-        Create a concise doctor summary with next steps.
-        """
-        summary = groq_call(prompt, "You write clinical summaries.")
-        st.text_area("Doctor Review", summary, height=220)
-
-st.caption("⚠️ Educational decision support only. Not a medical diagnosis.")
+if target_col in numeric_df.columns:
+    corr_values = numeric_df.corr()[target_col].sort_values(ascending=False)
+    st.dataframe(corr_values)
+else:
+    st.write("Correlation data unavailable.")
