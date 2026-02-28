@@ -1,7 +1,7 @@
 streamlit
 pandas
 numpy
-plotly
 scikit-learn
-python-dotenv
+plotly
 requests
+python-dotenv

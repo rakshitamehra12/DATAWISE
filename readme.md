@@ -1,38 +1,92 @@
-# AuraPath
 
-AuraPath is a simple AI-based clinical decision support prototype focused on early diabetes risk assessment.
-The goal of this project is to show how basic patient data can be used to estimate risk and provide understandable insights for both patients and healthcare learners.
+# DataWise
+
+DataWise is a simple AI-powered Clinical Decision Support (CDS) prototype focused on early diabetes risk prediction.
+The project demonstrates how basic patient health data can be analyzed using machine learning to estimate diabetes risk and provide understandable insights.
+
+
 
 ## Project Overview
 
-AuraPath is a lightweight MVP created as part of a hackathon project.
-It takes a few common clinical inputs and predicts the likelihood of diabetes using a machine learning model. The results are shown in a clear dashboard so the risk level and important factors can be easily understood.
+DataWise was developed as a hackathon MVP to showcase how data-driven healthcare tools can assist in early disease risk assessment.
+
+The application collects common clinical inputs such as glucose level, BMI, age, blood pressure, etc., and predicts the probability of diabetes using a trained Logistic Regression model.
+
+The results are displayed in a clear and interactive dashboard to help users:
+
+* Understand their predicted risk level
+* View probability scores visually
+* See important contributing health factors
+* Receive simple AI-generated lifestyle suggestions
+
 
 ## Features
 
-* Takes basic patient health inputs
-* Predicts diabetes risk using a Logistic Regression model
-* Shows risk probability in a visual format
-* Identifies the main factors influencing the prediction
-* Generates simple AI-based lifestyle suggestions and summary notes
+* User-friendly health input interface
+* Diabetes risk prediction using Logistic Regression
+* Probability-based risk scoring
+* Interactive data visualization using Plotly
+* Identification of key influencing health factors
+* AI-generated summary and lifestyle recommendations (via Groq API)
+
+
+
+## How It Works
+
+1. User enters clinical values.
+2. The trained ML model processes the inputs.
+3. The system calculates diabetes risk probability.
+4. Visual graphs and insights are displayed.
+5. Optional AI integration generates personalized suggestions.
 
 ## Tech Stack
 
 * Python
 * Streamlit
-* Pandas and NumPy
+* Pandas
+* NumPy
 * Scikit-learn
 * Plotly
-* Groq API (used for generating explanations)
+* Groq API (for AI-generated explanations)
+* Python-dotenv
+
+## Project Structure
+
+DataWise/
+│
+├── app.py
+├── datasetdiabetes.csv
+├── README.md
+├── requirements.txt
+├── .gitignore
+├── .env 
+
+
+
 
 ## Running the Project Locally
 
-1. Install the required libraries:
+### Install required libraries
 
 pip install -r requirements.txt
 
 
-2. Run the Streamlit app:
+###  Run the Streamlit app
+streamlit run app.py
 
-streamlit run trial_mvp.py
+## API Configuration 
+
+To enable AI-based explanations:
+
+1. Create a `.env` file
+2. Add your Groq API key:
+
+```
+GROQ_API_KEY=your_api_key_here
+```
+
+OR
+Enter your API key directly in the Streamlit sidebar interface.
+
+If no API key is provided, the core ML prediction system still works normally.
 
