@@ -109,6 +109,7 @@ monitor glucose frequently, and follow a structured diet plan.
 st.subheader("Clinical Guidance")
 st.write(basic_advice(risk))
 
+
 # Optional AI Enhancement  #
 def get_ai_response(prompt, key):
     import requests
