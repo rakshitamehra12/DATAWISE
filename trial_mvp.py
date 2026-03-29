@@ -168,3 +168,4 @@ if target_col in numeric_df.columns:
     st.dataframe(corr_values)
 else:
     st.write("Correlation data unavailable.")
+
