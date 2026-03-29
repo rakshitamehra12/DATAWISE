@@ -61,7 +61,21 @@ DataWise/
 ├── .gitignore
 ├── .env 
 
+## System Architecture
 
+User Input (Streamlit UI)
+        ↓
+Data Processing Agent
+        ↓
+ML Prediction Agent (Logistic Regression)
+        ↓
+Insight Generation Agent
+        ↓
+AI Recommendation Agent (Groq API)
+        ↓
+Visualization Layer (Plotly Dashboard)
+        ↓
+User Output
 
 
 ## Running the Project Locally
