@@ -39,7 +39,7 @@ if target_col is None:
     st.error("Target column not found in dataset.")
     st.stop()
 
-df_model = df.copy()
+df_model = df.copy()  # creating a copy to avoid modifying original dataframe
 
 # Encode categorical columns
 encoders = {}
@@ -53,7 +53,7 @@ X = df_model.drop(columns=[target_col])
 y = df_model[target_col]
 
 # Train simple model
-model = LogisticRegression(max_iter=1000)
+model = LogisticRegression(max_iter=1000, solver="lbfgs")
 model.fit(X, y)
 
 #  User Input Section  #
@@ -71,7 +71,7 @@ for col in X.columns:
         default = float(df[col].mean())
         user_data[col] = st.sidebar.slider(col, min_val, max_val, default)
 
-input_df = pd.DataFrame([user_data])
+input_df = pd.DataFrame([user_data]).copy()
 
 # Apply same encoding to input
 for col in input_df.columns:
